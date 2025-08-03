@@ -987,6 +987,37 @@ require('lazy').setup({
     --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
   },
+  {
+    'nvim-tree/nvim-tree.lua',
+    version = '*',
+    lazy = false,
+    dependencies = { 'nvim-tree/nvim-web-devicons' },
+    config = function()
+      require('nvim-tree').setup {
+        view = { side = 'right' },
+        on_attach = function(bufnr)
+          local api = require 'nvim-tree.api'
+          api.config.mappings.default_on_attach(bufnr)
+          vim.keymap.set('n', '<CR>', function()
+            local node = api.tree.get_node_under_cursor()
+            if node.type ~= 'directory' then
+              vim.cmd 'wincmd h'
+              api.tree.close()
+              api.node.open.tab(node)
+            else
+              api.node.open.tab_drop()
+            end
+          end, { desc = 'Open in new tab', buffer = bufnr, noremap = true, silent = true, nowait = true })
+          vim.keymap.set('n', '<C-c>', function()
+            local node = api.tree.get_node_under_cursor()
+            if node.type == 'directory' then
+              api.tree.change_root_to_node(node)
+            end
+          end, { desc = 'Change root directory to node' })
+        end,
+      }
+    end,
+  },
 
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
@@ -1063,7 +1094,10 @@ vim.o.virtualedit = 'onemore'
 
 vim.api.nvim_create_autocmd('VimEnter', {
   callback = function()
-    vim.cmd 'Telescope find_files'
+    local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+    if #lines == 0 or (#lines == 1 and #lines[1] == 0) then
+      vim.cmd 'Telescope find_files'
+    end
   end,
 })
 
@@ -1074,10 +1108,29 @@ end, { nargs = '?', complete = 'file' })
 
 vim.cmd 'autocmd BufEnter *.gleam :setlocal tabstop=2 shiftwidth=2 expandtab'
 
--- things I still want to set to make neovim barely usable
--- - toggle line comments with <A-/>
+-- nvim-tree config
+vim.api.nvim_set_keymap('n', '<C-h>', ':NvimTreeToggle<cr>', { silent = true, noremap = true })
+local function vsplit_preview()
+  local api = require 'nvim-tree.api'
+  local node = api.tree.get_node_under_cursor()
+  if node.nodes ~= nil then
+    api.node.open.edit()
+  else
+    api.node.open.vertical()
+  end
+
+  api.tree.focus()
+end
+
+vim.keymap.set('n', 'L', vsplit_preview, { desc = 'Vsplit Preview' })
+vim.keymap.set('n', 'H', function()
+  local api = require 'nvim-tree.api'
+  api.tree.collapse_all()
+end, { desc = 'Collapse All' })
+
+-- things I still want to set up
+-- - toggle line comments with <A-/> or <C-/>
 -- - fix the default tab naming
--- - use :o for opening a file in a new tab
 -- - set default tab space to 4 (tried above but hasn't worked; this file still working on 2 space indents)
 
 -- vim: ts=2 sts=2 sw=2 et
