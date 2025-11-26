@@ -593,7 +593,7 @@ require('lazy').setup({
           --
           -- When you move your cursor, the highlights will be cleared (the second autocommand).
           local client = vim.lsp.get_client_by_id(event.data.client_id)
-          if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight) then
+          if client and client:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight) then
             local highlight_augroup = vim.api.nvim_create_augroup('kickstart-lsp-highlight', { clear = false })
             vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
               buffer = event.buf,
@@ -620,7 +620,7 @@ require('lazy').setup({
           -- code, if the language server you are using supports them
           --
           -- This may be unwanted, since they displace some of your code
-          if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint) then
+          if client and client:supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint) then
             map('<leader>th', function()
               vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf })
             end, '[T]oggle Inlay [H]ints')
@@ -1077,6 +1077,12 @@ vim.keymap.set({ 'n', 'v' }, '(', 'xi()<esc>P', { desc = 'Match parentheses ()' 
 vim.keymap.set({ 'n', 'v' }, '"', 'xi""<esc>P', { desc = 'Match quotations ""' })
 vim.keymap.set({ 'n', 'v' }, '[', 'xi[]<esc>P', { desc = 'Match backets []' })
 vim.keymap.set({ 'n', 'v' }, '{', 'xi{}<esc>P', { desc = 'Match squirlies {}' })
+vim.keymap.set('n', '<C-_>', function()
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('Vgc', true, false, true), 'v', false)
+end, { desc = 'Comment', noremap = true, silent = true })
+vim.keymap.set('v', '<C-_>', function()
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('gc', true, false, true), 'v', false)
+end, { desc = 'Comment', noremap = true, silent = true })
 vim.keymap.set('n', '<leader>q', function()
   local tab_count = #vim.api.nvim_list_tabpages()
   if tab_count == 1 then
@@ -1109,7 +1115,7 @@ end, { nargs = '?', complete = 'file' })
 vim.cmd 'autocmd BufEnter *.gleam :setlocal tabstop=2 shiftwidth=2 expandtab'
 
 -- nvim-tree config
-vim.api.nvim_set_keymap('n', '<C-h>', ':NvimTreeToggle<cr>', { silent = true, noremap = true })
+vim.keymap.set('n', '<C-h>', ':NvimTreeToggle<cr>', { silent = true, noremap = true })
 local function vsplit_preview()
   local api = require 'nvim-tree.api'
   local node = api.tree.get_node_under_cursor()
