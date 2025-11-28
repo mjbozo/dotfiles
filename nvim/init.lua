@@ -1132,7 +1132,12 @@ vim.keymap.set('n', 'L', vsplit_preview, { desc = 'Vsplit Preview' })
 vim.keymap.set('n', 'H', function()
   local api = require 'nvim-tree.api'
   api.tree.collapse_all()
-end, { desc = 'Collapse All' })
+end, { desc = 'Collapse All', noremap = true, silent = true })
+
+vim.api.nvim_create_user_command('Wd', function(opts)
+  local cmdArg = 'w ++p ' .. (opts.fargs[1] or '')
+  vim.cmd(cmdArg)
+end, { nargs = '?', complete = 'file' })
 
 -- things I still want to set up
 -- - toggle line comments with <A-/> or <C-/>
